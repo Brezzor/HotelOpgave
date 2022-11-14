@@ -13,11 +13,19 @@ namespace HotelOpgave.Models
     {        
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Fac_Id { get; set; }        
-        public string? Name { get; set; }
+        public int Id { get; set; }
+        [Required]
+        [StringLength(50)]
+        public string Name { get; set; }
+
+        public Facility(string name)
+        {
+            Name = name;
+        }
+
         public override string ToString()
         {
-            return $"Fac_Id: {Fac_Id} | Name: {Name}";
+            return $"Id: {Id} | Name: {Name}";
         }
     }
 }

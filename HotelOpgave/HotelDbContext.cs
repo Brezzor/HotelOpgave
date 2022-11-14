@@ -22,7 +22,7 @@ namespace HotelOpgave
         {
             modelBuilder.Entity<Facility>(entity =>
             {
-                entity.Property(e => e.Fac_Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).IsFixedLength(true);
             });
         }

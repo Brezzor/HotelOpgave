@@ -34,7 +34,11 @@ static IHostBuilder CreateDefaultHost(string[] args)
             services.AddSingleton<Menu>();
             services.AddDbContext<HotelDbContext>(options =>
             {
-                options.UseSqlServer(context.Configuration.GetConnectionString("HotelDb"));
+                options.UseSqlServer(context.Configuration.GetConnectionString("HotelDb"), options =>
+                {
+                    options.EnableRetryOnFailure();
+                });
+                options.EnableSensitiveDataLogging();
             });
             services.AddTransient<IFacilityService, FacilityService>();
         })

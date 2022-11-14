@@ -1,6 +1,7 @@
 ﻿using HotelOpgave.Interfaces;
 using HotelOpgave.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,19 +24,6 @@ namespace HotelOpgave.Services
             return context.Facilities.AsNoTracking();
         }
 
-        private Facility CreateNewFacility(string? name)
-        {
-            return new Facility
-            {
-                Name = name
-            };
-        }
-
-        private Facility GetFacilityById(int id)
-        {
-            return context.Facilities.AsNoTracking().FirstOrDefault(f => f.Fac_Id == id);
-        }
-
         public void GetAllFacilities()
         {
             Console.Clear();
@@ -48,43 +36,104 @@ namespace HotelOpgave.Services
             }            
         }
 
+        private Facility? GetFacility()
+        {
+            int index = 0;
+            ConsoleKey ckey;
+            Facility? facility;
+            List<Facility> facilities = Facilities().ToList();
+            if (!facilities.IsNullOrEmpty())
+            {
+                do
+                {
+                    Console.Clear();
+                    for (int i = 0; i < facilities.Count(); i++)
+                    {
+                        if (i == index)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($">{facilities[i]}<");
+                        }
+                        else
+                        {
+                            Console.WriteLine($" {facilities[i]}");
+                        }
+                        Console.ResetColor();
+                    }
+
+                    ckey = Console.ReadKey(true).Key;
+
+                    switch (ckey)
+                    {
+                        case ConsoleKey.UpArrow:
+                            if (index != 0) { index--; }
+                            break;
+                        case ConsoleKey.DownArrow:
+                            if (index != facilities.Count() - 1) { index++; }
+                            break;
+                        default:
+                            break;
+                    }
+
+                    facility = facilities[index];
+
+                } while (ckey != ConsoleKey.Enter);
+
+                return facility;
+            }
+            return null;
+        }
+
         public void CreateFacility()
         {
             bool done = false;
+            string? name = null;
             ConsoleKeyInfo keyInfo;
 
             Console.Clear();
-            Console.WriteLine("Create a New Facility...\n");
+            Console.WriteLine("Create a Facility...\n");
 
             Console.WriteLine("Choose a name for the Facility");
             Console.Write("Name:");
             Console.CursorVisible = true;
-            string? name = Console.ReadLine();
-
-            Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
             do
             {
-                keyInfo = Console.ReadKey(true);
-                switch (keyInfo.Key)
+                name = Console.ReadLine();
+            } while (string.IsNullOrEmpty(name));            
+            if (name is not null && name.Length >= 0)
+            {
+                do
                 {
-                    case ConsoleKey.Enter:
-                        Console.WriteLine("Creating Facility...\n");
-                        Facility facility = CreateNewFacility(name);
-                        context.Add(facility);
-                        context.SaveChanges();
-                        Console.WriteLine("Facility created");
-                        Console.WriteLine(facility);
-                        done = true;
-                        break;
-                    case ConsoleKey.Escape:
-                        Console.WriteLine("\nCreation cancelled");
-                        done = true;
-                        break;
-                    default:
-                        break;
-                }
+                    Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
+                    keyInfo = Console.ReadKey(true);
+                    switch (keyInfo.Key)
+                    {
+                        case ConsoleKey.Enter:
+                            try
+                            {
+                                Console.WriteLine("\nCreating Facility...");
+                                Facility? facility = new Facility(name);
+                                context.Add(facility);
+                                context.SaveChanges();
+                                Console.WriteLine("\nFacility created");
+                                Console.WriteLine(facility);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                            }
+                            done = true;
+                            break;
+                        case ConsoleKey.Escape:
+                            Console.WriteLine("\nCreation cancelled");
+                            done = true;
+                            break;
+                        default:
+                            break;
+                    }
 
-            } while (!done);
+                } while (!done);
+            }            
 
             Console.WriteLine("\nPress any key to continue");
             Console.Read();
@@ -139,41 +188,86 @@ namespace HotelOpgave.Services
 
         public void DeleteFacility()
         {
-            bool done = false;
-            ConsoleKeyInfo keyInfo;
+            Facility? facility = GetFacility();
 
-            Console.Clear();
-            Console.WriteLine("Delete Facility...\n");
-
-            Console.WriteLine("Choose a name for the Facility");
-            Console.Write("Name:");
-            Console.CursorVisible = true;
-            string? name = Console.ReadLine();
-
-            Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
-            do
+            if (facility is not null)
             {
-                keyInfo = Console.ReadKey(true);
-                switch (keyInfo.Key)
-                {
-                    case ConsoleKey.Enter:
-                        Console.WriteLine("Creating Facility...\n");
-                        Facility facility = CreateNewFacility(name);
-                        context.Add(facility);
-                        context.SaveChanges();
-                        Console.WriteLine("Facility created");
-                        Console.WriteLine(facility);
-                        done = true;
-                        break;
-                    case ConsoleKey.Escape:
-                        Console.WriteLine("\nCreation cancelled");
-                        done = true;
-                        break;
-                    default:
-                        break;
-                }
+                bool done = false;
+                ConsoleKeyInfo keyInfo;
 
-            } while (!done);
+                do
+                {
+                    Console.Clear();
+                    Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
+                    keyInfo = Console.ReadKey(true);
+                    switch (keyInfo.Key)
+                    {
+                        case ConsoleKey.Enter:
+                            try
+                            {
+                                Console.WriteLine("\nDeleting Facility...");
+                                context.Remove(facility);
+                                context.SaveChanges();
+                                Console.WriteLine("\nFacility deleted");
+                                Console.WriteLine(facility);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                            }                            
+                            done = true;
+                            break;
+                        case ConsoleKey.Escape:
+                            Console.WriteLine("\nDeletion cancelled");
+                            done = true;
+                            break;
+                        default:
+                            break;
+                    }
+
+                } while (!done);
+            }
+            //int id;
+            //bool done = false;
+            //ConsoleKeyInfo keyInfo;
+
+            //Console.Clear();
+            //Console.WriteLine("Delete a Facility...\n");
+            //GetAllFacilities();
+
+            //Console.WriteLine("\nChoose the Id of the Facility you want to delete");
+            //Console.CursorVisible = true;
+            //Console.Write("Id:");
+            //string? input = Console.ReadLine();
+            //while (!int.TryParse(input, out id))
+            //{
+            //    Console.Write("Id:");
+            //    input = Console.ReadLine();
+            //} 
+            //Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
+            //do
+            //{
+            //    keyInfo = Console.ReadKey(true);
+            //    switch (keyInfo.Key)
+            //    {
+            //        case ConsoleKey.Enter:
+            //            Console.WriteLine("Deleting Facility...\n");
+            //            Facility? facility = GetFacilityById(id);
+            //            context.Add(facility);
+            //            context.SaveChanges();
+            //            Console.WriteLine("Facility deleted");
+            //            Console.WriteLine(facility);
+            //            done = true;
+            //            break;
+            //        case ConsoleKey.Escape:
+            //            Console.WriteLine("\nDeletion cancelled");
+            //            done = true;
+            //            break;
+            //        default:
+            //            break;
+            //    }
+
+            //} while (!done);
 
             Console.WriteLine("\nPress any key to continue");
             Console.Read();
