@@ -16,12 +16,7 @@ namespace HotelOpgave.Models
         public int Id { get; set; }
         [Required]
         [StringLength(50)]
-        public string Name { get; set; }
-
-        public Facility(string name)
-        {
-            Name = name;
-        }
+        public string? Name { get; set; }
 
         public override string ToString()
         {

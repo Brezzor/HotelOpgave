@@ -41,7 +41,7 @@ namespace HotelOpgave
                     case 0:
                         facilityService.GetAllFacilities();
                         Console.WriteLine("\nPress any key to continue");
-                        Console.ReadKey(true);
+                        Console.ReadKey();
                         break;
                     case 1:
                         facilityService.CreateFacility();

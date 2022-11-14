@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HotelOpgave.Services
@@ -21,7 +22,7 @@ namespace HotelOpgave.Services
 
         private IEnumerable<Facility> Facilities()
         {
-            return context.Facilities.AsNoTracking();
+            return context.Facilities;
         }
 
         public void GetAllFacilities()
@@ -40,13 +41,14 @@ namespace HotelOpgave.Services
         {
             int index = 0;
             ConsoleKey ckey;
-            Facility? facility;
+            Facility? facility = new Facility();
             List<Facility> facilities = Facilities().ToList();
             if (!facilities.IsNullOrEmpty())
             {
                 do
                 {
                     Console.Clear();
+                    Console.WriteLine("List of Facilities\n");
                     for (int i = 0; i < facilities.Count(); i++)
                     {
                         if (i == index)
@@ -93,13 +95,16 @@ namespace HotelOpgave.Services
             Console.Clear();
             Console.WriteLine("Create a Facility...\n");
 
-            Console.WriteLine("Choose a name for the Facility");
-            Console.Write("Name:");
+            Console.WriteLine("Choose a name for the Facility");            
             Console.CursorVisible = true;
             do
             {
+                Console.Write("Name:");
                 name = Console.ReadLine();
-            } while (string.IsNullOrEmpty(name));            
+            } while (string.IsNullOrEmpty(name));
+            
+            Console.CursorVisible = false;
+            
             if (name is not null && name.Length >= 0)
             {
                 do
@@ -112,8 +117,8 @@ namespace HotelOpgave.Services
                             try
                             {
                                 Console.WriteLine("\nCreating Facility...");
-                                Facility? facility = new Facility(name);
-                                context.Add(facility);
+                                Facility? facility = new Facility { Name = name };
+                                context.Facilities.Add(facility);
                                 context.SaveChanges();
                                 Console.WriteLine("\nFacility created");
                                 Console.WriteLine(facility);
@@ -136,54 +141,67 @@ namespace HotelOpgave.Services
             }            
 
             Console.WriteLine("\nPress any key to continue");
-            Console.Read();
+            Console.ReadKey();
         }
 
         public void UpdateFacility()
         {
-            bool done = false;
-            ConsoleKeyInfo keyInfo;
+            string? name = null;
+            Facility? facility = GetFacility();
 
-            Console.Clear();
-            Console.WriteLine("Update a Facility...\n");
-            GetAllFacilities();
-
-            Console.WriteLine("Choose the Id of the Facility you want to update");            
-            Console.CursorVisible = true;
-            string? input;
-            do
+            if (facility is not null)
             {
-                Console.Write("Id:");
-                input = Console.ReadLine();
-            } while (!int.TryParse(input, out int id));      
+                bool done = false;
+                ConsoleKeyInfo keyInfo;
 
-            //Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
-            //do
-            //{
-            //    keyInfo = Console.ReadKey(true);
-            //    switch (keyInfo.Key)
-            //    {
-            //        case ConsoleKey.Enter:
-            //            Console.WriteLine("Udating Facility...\n");
-            //            Facility facility = UpdateFacility(result);
-            //            context.Add(facility);
-            //            context.SaveChanges();
-            //            Console.WriteLine("Facility created");
-            //            Console.WriteLine(facility);
-            //            done = true;
-            //            break;
-            //        case ConsoleKey.Escape:
-            //            Console.WriteLine("\nCreation cancelled");
-            //            done = true;
-            //            break;
-            //        default:
-            //            break;
-            //    }
+                do
+                {
+                    Console.Clear();
+                    Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
+                    keyInfo = Console.ReadKey(true);
+                    switch (keyInfo.Key)
+                    {
+                        case ConsoleKey.Enter:
+                            Console.WriteLine("\nChoose a new name for the Facility");
+                            Console.CursorVisible = true;
+                            do
+                            {
+                                Console.Write("Name:");
+                                name = Console.ReadLine();
+                            } while (string.IsNullOrEmpty(name));
+                            Console.CursorVisible = false;
+                            try
+                            {
+                                Console.WriteLine("\nUdating Facility...");
+                                facility.Name = name;
+                                context.Facilities.Update(facility);
+                                context.SaveChanges();
+                                Console.WriteLine("\nFacility Updated");
+                                Console.WriteLine(facility);
+                            }
+                            catch (Exception ex)
+                            {
+                                context.Entry(facility).State= EntityState.Detached;
+                                context.SaveChanges();
+                                Console.WriteLine(ex.Message);
+                            }
+                            done = true;
+                            break;
+                        case ConsoleKey.Escape:
+                            Console.WriteLine("\nUpdate cancelled");
+                            done = true;
+                            break;
+                        default:
+                            break;
+                    }
 
-            //} while (!done);
+                } while (!done);
+            }
 
+
+            Thread.Sleep(1000);
             Console.WriteLine("\nPress any key to continue");
-            Console.Read();
+            Console.ReadKey();
         }
 
         public void DeleteFacility()
@@ -206,13 +224,15 @@ namespace HotelOpgave.Services
                             try
                             {
                                 Console.WriteLine("\nDeleting Facility...");
-                                context.Remove(facility);
+                                context.Facilities.Remove(facility);
                                 context.SaveChanges();
                                 Console.WriteLine("\nFacility deleted");
                                 Console.WriteLine(facility);
                             }
                             catch (Exception ex)
                             {
+                                context.Entry(facility).State = EntityState.Detached;
+                                context.SaveChanges();
                                 Console.WriteLine(ex.Message);
                             }                            
                             done = true;
@@ -226,51 +246,10 @@ namespace HotelOpgave.Services
                     }
 
                 } while (!done);
-            }
-            //int id;
-            //bool done = false;
-            //ConsoleKeyInfo keyInfo;
-
-            //Console.Clear();
-            //Console.WriteLine("Delete a Facility...\n");
-            //GetAllFacilities();
-
-            //Console.WriteLine("\nChoose the Id of the Facility you want to delete");
-            //Console.CursorVisible = true;
-            //Console.Write("Id:");
-            //string? input = Console.ReadLine();
-            //while (!int.TryParse(input, out id))
-            //{
-            //    Console.Write("Id:");
-            //    input = Console.ReadLine();
-            //} 
-            //Console.WriteLine("\nPress Enter to Confirm or Escape to cancel");
-            //do
-            //{
-            //    keyInfo = Console.ReadKey(true);
-            //    switch (keyInfo.Key)
-            //    {
-            //        case ConsoleKey.Enter:
-            //            Console.WriteLine("Deleting Facility...\n");
-            //            Facility? facility = GetFacilityById(id);
-            //            context.Add(facility);
-            //            context.SaveChanges();
-            //            Console.WriteLine("Facility deleted");
-            //            Console.WriteLine(facility);
-            //            done = true;
-            //            break;
-            //        case ConsoleKey.Escape:
-            //            Console.WriteLine("\nDeletion cancelled");
-            //            done = true;
-            //            break;
-            //        default:
-            //            break;
-            //    }
-
-            //} while (!done);
+            }            
 
             Console.WriteLine("\nPress any key to continue");
-            Console.Read();
+            Console.ReadKey();
         }
     }
 }
