@@ -6,14 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HotelOpgave.Services
+namespace HotelOpgave
 {
     public class Menu
     {
         private readonly IFacilityService facilityService;
         private List<string> options = new List<string>();
-        private int index;
-        private ConsoleKeyInfo keyInfo;
         private ConsoleKey cKey;
         public Menu(IFacilityService facilityService)
         {
@@ -22,8 +20,7 @@ namespace HotelOpgave.Services
 
         public void Run(string[] args)
         {
-            bool running = true;
-            Console.CursorVisible = false;
+            bool running = true;            
 
             options = new List<string>
             {
@@ -36,39 +33,52 @@ namespace HotelOpgave.Services
 
             while (running)
             {
+                Console.CursorVisible = false;
                 Console.Clear();
-                int choice = PrintMenu(options, options[index]);
+                int choice = PrintMenu(options);
                 switch (choice)
                 {
                     case 0:
                         facilityService.GetAllFacilities();
+                        Console.WriteLine("\nPress any key to continue");
+                        Console.ReadKey(true);
                         break;
-                    case 5:
+                    case 1:
+                        facilityService.CreateFacility();
+                        break;
+                    case 2:
+                        facilityService.UpdateFacility();
+                        break;
+                    case 3:
+                        facilityService.DeleteFacility();
+                        break;
+                    case 4:
                         running = false;
-                        break;                        
+                        break;
                     default:
                         break;
                 }
             }
             Environment.Exit(0);
-        }        
-        private int PrintMenu(List<string> options, string selectedOption)
+        }
+        private int PrintMenu(List<string> options)
         {
+            int index = 0;
             do
             {
                 Console.Clear();
                 if (!options.IsNullOrEmpty())
                 {
-                    foreach (string option in options)
+                    for (int i = 0; i < options?.Count; i++)
                     {
-                        if (option == selectedOption)
+                        if (i == index)
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($">{option}<");
+                            Console.WriteLine($">{options[i]}<");
                         }
                         else
                         {
-                            Console.WriteLine($" {option}");
+                            Console.WriteLine($" {options[i]}");
                         }
                         Console.ResetColor();
                     }
@@ -79,10 +89,10 @@ namespace HotelOpgave.Services
                 switch (cKey)
                 {
                     case ConsoleKey.UpArrow:
-                        if (index != options?.Count - 1) { index--; }
+                        if (index != 0) { index--; }
                         break;
                     case ConsoleKey.DownArrow:
-                        if (index != 0) { index++; }
+                        if (index != options?.Count - 1) { index++; }
                         break;
                     default:
                         break;

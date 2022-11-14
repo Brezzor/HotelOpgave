@@ -1,5 +1,4 @@
 ﻿using HotelOpgave.Interfaces;
-using HotelOpgave.Services;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
