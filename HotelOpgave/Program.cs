@@ -1,36 +1,45 @@
 ﻿using HotelOpgave;
+using HotelOpgave.Interfaces;
+using HotelOpgave.Services;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-/* Making the connection to the SQL Server */
-using (SqlConnection con = new SqlConnection(DbClient.GetConnectionString()))
+using (IHost host = CreateDefaultHost(args).Build())
 {
-    /* Opening the connection to the SQL Server */
-    con.Open();
+    using (IServiceScope scope = host.Services.CreateScope())
+    {
+        IServiceProvider serviceProvider = scope.ServiceProvider;
 
-    /* Reading and Writing all Facilities */
-    Console.WriteLine("Writing all facilities...\n");
-    DbClient.GetAllFacilities(con);
+        try
+        {
+            serviceProvider.GetRequiredService<App>().Run(args);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+}
 
-    /* Inserting a new Facility */
-    DbClient.InsertFacility(con);
-    
-    /* Updating the new Facility */
-    DbClient.UpdateFacility(con);
-
-    Console.WriteLine("Writing all facilities...\n");
-    DbClient.GetAllFacilities(con);
-    DbClient.DeleteFacility(con);
-    Console.WriteLine("Writing all facilities...\n");
-    DbClient.GetAllFacilities(con);
-
-    Console.WriteLine("Writing all hotelFacilities...\n");
-    DbClient.GetAllHotelFacilities(con);
-
-    DbClient.InsertHotelFacility(con);    
-
-    Console.WriteLine("Writing all hotelFacilities...\n");
-    DbClient.GetAllHotelFacilities(con);
-    DbClient.DeleteHotelFacility(con);
-    Console.WriteLine("Writing all hotelFacilities...\n");
-    DbClient.GetAllHotelFacilities(con);
+static IHostBuilder CreateDefaultHost(string[] args)
+{
+    return Host.CreateDefaultBuilder(args)
+        .ConfigureServices((context, services) =>
+        {
+            services.AddSingleton<App>();
+            services.AddSingleton<Menu>();
+            services.AddDbContext<HotelDbContext>(options =>
+            {
+                options.UseSqlServer(context.Configuration.GetConnectionString("HotelDb"));
+            });
+            services.AddTransient<IFacilityService, FacilityService>();
+        })
+        .ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+        });
 }
